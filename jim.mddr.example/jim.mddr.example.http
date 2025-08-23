@@ -1,0 +1,6 @@
+@jim.mddr.example_HostAddress = http://localhost:5015
+
+GET {{jim.mddr.example_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
