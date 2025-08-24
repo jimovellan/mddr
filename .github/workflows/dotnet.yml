@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*.*.*'   # Solo tags semánticos tipo v1.2.3
 
+
+#permiso necesarios para escribir en el nuget de github
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
