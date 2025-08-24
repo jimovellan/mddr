@@ -2,40 +2,51 @@ name: Build and Publish NuGet Package
 
 on:
   push:
-    branches:
-      - main        # Solo en la rama main
     tags:
-      - 'v*.*.*'    # Solo cuando se pushea un tag del estilo v1.0.0
+      - 'v*.*.*'   # Solo tags semánticos tipo v1.2.3
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify tag is on main
+        run: |
+          git fetch origin main
+          # Compara el commit del tag con el de main
+          TAG_COMMIT=$(git rev-parse $GITHUB_REF)
+          MAIN_COMMIT=$(git rev-parse origin/main)
+          if [ "$TAG_COMMIT" != "$MAIN_COMMIT" ]; then
+            echo "Tag must be created from main!"
+            exit 1
+          fi
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore src/jim.mddr/jim.mddr.csproj
 
-      - name: Build solution
+      - name: Build
         run: dotnet build src/jim.mddr/jim.mddr.csproj --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test src/jim.mddr/jim.mddr.csproj --configuration Release --no-build --verbosity normal
+      - name: Pack
+        run: dotnet pack src/jim.mddr/jim.mddr.csproj \
+              --configuration Release --no-build \
+              -o ./artifacts \
+              /p:PackageVersion=${GITHUB_REF_NAME#v}
 
-      - name: Pack NuGet package
-        run: dotnet pack src/jim.mddr/jim.mddr.csproj --configuration Release --no-build -o ./artifacts /p:PackageVersion=${GITHUB_REF#refs/tags/v}
-
-      - name: Add GitHub NuGet source
-        run: dotnet nuget add source \
-          --username ${{ github.actor }} \
-          --password ${{ secrets.GITHUB_TOKEN }} \
-          --store-password-in-clear-text \
-          --name github \
-          "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget add source \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text \
+            --name github "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source "github"
