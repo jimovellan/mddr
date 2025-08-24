@@ -21,16 +21,21 @@ jobs:
           dotnet-version: '8.0.0'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/jim.mddr/jim.mddr.csproj
 
       - name: Build solution
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/jim.mddr/jim.mddr.csproj --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test src/jim.mddr/jim.mddr.csproj --configuration Release --no-build --verbosity normal
 
       - name: Pack NuGet package
-        run: dotnet pack --configuration Release --no-build -o ./artifacts /p:PackageVersion=${GITHUB_REF#refs/tags/v}
+        run: dotnet pack src/jim.mddr/jim.mddr.csproj --configuration Release --no-build -o ./artifacts /p:PackageVersion=${GITHUB_REF#refs/tags/v}
 
-      - name: Publish to NuGet
-        run: dotnet nuget push "./artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      - name: Add GitHub NuGet source
+        run: dotnet nuget add source \
+          --username ${{ github.actor }} \
+          --password ${{ secrets.GITHUB_TOKEN }} \
+          --store-password-in-clear-text \
+          --name github \
+          "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
