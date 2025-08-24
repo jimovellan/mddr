@@ -13,11 +13,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-builder.Services.AddMddr(typeof(Program).Assembly);
-builder.Services.AddTransient<IPipeline, Pipeline1>();
-builder.Services.AddTransient<IPipeline, LoggingPipeline>();
-builder.Services.AddTransient<IPublisher<TestRequest>, Example1Publisher>();
-builder.Services.AddTransient<IPublisher<TestRequest>, Example2Publisher>();
+builder.Services.AddMddr(typeof(Program).Assembly)
+                .AddPipeline<Pipeline1>()
+                .AddPipeline<LoggingPipeline>()
+                .AddPublisher<Example1Publisher,TestRequest>()
+                .AddPublisher<Example2Publisher,TestRequest>();
 
 
 var app = builder.Build();
