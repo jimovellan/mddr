@@ -1,0 +1,36 @@
+name: Build and Publish NuGet Package
+
+on:
+  push:
+    branches:
+      - main        # Solo en la rama main
+    tags:
+      - 'v*.*.*'    # Solo cuando se pushea un tag del estilo v1.0.0
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.0'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Pack NuGet package
+        run: dotnet pack --configuration Release --no-build -o ./artifacts /p:PackageVersion=${GITHUB_REF#refs/tags/v}
+
+      - name: Publish to NuGet
+        run: dotnet nuget push "./artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
