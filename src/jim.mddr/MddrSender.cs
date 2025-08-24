@@ -1,4 +1,5 @@
 using System.Data;
+using Jim.Mddr.Extensions;
 using Jim.Mddr.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,23 @@ public class MddrSender : ISender, IDisposable
     {
         // Implementation for obtaining pipelines
         serviceProvider.GetServices<IPipeline>();
+    }
+
+    public async Task PublishAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)  where TEntity : class
+    {
+        var publishers = serviceProvider.GetServices(typeof(IPublisher<TEntity>)).ToArray();
+
+        if (publishers.HasNoElements()) return;
+        
+        foreach (var publisher in publishers)
+        {
+            var method = typeof(IPublisher<TEntity>).GetMethod("PublishAsync");
+            if (method != null)
+            {
+                await (Task)method.Invoke(publisher, new object[] { entity, cancellationToken });    
+            }
+            
+        }
     }
 
     public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> command, CancellationToken cancellationToken = default)
