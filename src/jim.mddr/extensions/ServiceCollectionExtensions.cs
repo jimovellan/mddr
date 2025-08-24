@@ -1,4 +1,5 @@
 using System.Reflection;
+using Jim.Mddr.Builder;
 using Jim.Mddr.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,16 +13,10 @@ public static class ServiceCollectionExtensions
     /// <param name="services"></param>
     /// <param name="assemblies"></param>
     /// <returns></returns>
-    public static IServiceCollection AddMddr(this IServiceCollection services, List<Assembly> assemblies)
+    public static IMddrServiceBuilder AddMddr(this IServiceCollection services, List<Assembly> assemblies)
     {
-        services.AddScoped<ISender, MddrSender>();
-
-        services.Scan(a => a.FromAssemblies(assemblies)
-            .AddClasses(classes => classes.AssignableTo(typeof(IRequestHandler<,>)))
-            .AsImplementedInterfaces()
-            .WithScopedLifetime());
-
-        return services;
+        return  new MddrServiceBuilder(services).RegisterMddrAndHandlers(assemblies);
+       
     }
 
 
@@ -31,7 +26,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services"></param>
     /// <param name="assembly"></param>
     /// <returns></returns>
-    public static IServiceCollection AddMddr(this IServiceCollection services, Assembly assembly)
+    public static IMddrServiceBuilder AddMddr(this IServiceCollection services, Assembly assembly)
     {
         return services.AddMddr(new List<Assembly> { assembly });
     }
@@ -43,7 +38,7 @@ public static class ServiceCollectionExtensions
     /// <param name="assemblyNames"></param>
     /// <returns></returns>
 
-    public static IServiceCollection AddMddr(this IServiceCollection services, List<string> assemblyNames)
+    public static IMddrServiceBuilder AddMddr(this IServiceCollection services, List<string> assemblyNames)
     {
         var assemblies = assemblyNames.Select(Assembly.Load).ToList();
         return services.AddMddr(assemblies);
