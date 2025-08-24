@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Debug Example (http)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/jim.mddr.example/bin/Debug/net8.0/jim.mddr.example.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/jim.mddr.example",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "launchBrowser": {
+        "enabled": true,
+        "args": "swagger",
+        "windows": {
+          "command": "cmd.exe",
+          "args": "/C start http://localhost:5015/swagger"
+        }
+      },
+      "applicationUrl": "http://localhost:5015",
+      "stopAtEntry": false
+    },
+    {
+      "name": ".NET Debug Example (https)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/jim.mddr.example/bin/Debug/net8.0/jim.mddr.example.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/jim.mddr.example",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "launchBrowser": {
+        "enabled": true,
+        "args": "swagger",
+        "windows": {
+          "command": "cmd.exe",
+          "args": "/C start https://localhost:7214/swagger"
+        }
+      },
+      "applicationUrl": "https://localhost:7214;http://localhost:5015",
+      "stopAtEntry": false
+    }
+  ]
+}

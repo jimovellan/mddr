@@ -1,0 +1,44 @@
+.vscode/
+.history/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+*.tmp
+*.log
+*.bak
+*.swp
+*.DS_Store
+# Archivos de compilación y dependencias .NET Core
+bin/
+obj/
+artifacts/
+
+# Paquetes NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+
+# Archivos de usuario y configuración de Visual Studio/VS Code
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Archivos de configuración de entorno
+.env
+
+# Archivos de depuración
+*.pdb
+*.mdb
+
+# Archivos de test y cobertura
+TestResults/
+*.coverage
+*.coveragexml
+
+# Archivos de publicación
+publish/
+out/
