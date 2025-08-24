@@ -1,5 +1,6 @@
 using Jim.Mddr.Example.Command;
 using Jim.Mddr.Example.Pipelines;
+using Jim.Mddr.Example.Publishers;
 using Jim.Mddr.Extensions;
 using Jim.Mddr.Interfaces;
 using Jim.Mddr.Pipelines;
@@ -15,6 +16,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMddr(typeof(Program).Assembly);
 builder.Services.AddTransient<IPipeline, Pipeline1>();
 builder.Services.AddTransient<IPipeline, LoggingPipeline>();
+builder.Services.AddTransient<IPublisher<TestRequest>, Example1Publisher>();
+builder.Services.AddTransient<IPublisher<TestRequest>, Example2Publisher>();
+
 
 var app = builder.Build();
 
@@ -29,11 +33,18 @@ app.UseHttpsRedirection();
 
 
 
-app.MapGet("/Test", async (ISender sender, CancellationToken cancellationToken) =>
+app.MapGet("/Commands", async (ISender sender, CancellationToken cancellationToken) =>
 {
-   return await sender.SendAsync(new TestRequest(), cancellationToken);
+    return await sender.SendAsync(new TestRequest(), cancellationToken);
 })
 .WithName("Test")
+.WithOpenApi();
+
+app.MapGet("/Publish", async (ISender sender, CancellationToken cancellationToken) =>
+{
+    await sender.PublishAsync(new TestRequest(), cancellationToken);
+    return Results.Ok();
+}).WithName("Publish")
 .WithOpenApi();
 
 app.Run();
