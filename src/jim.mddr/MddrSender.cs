@@ -19,12 +19,14 @@ public class MddrSender : ISender, IDisposable
         
     }
 
-    public void GetPipelines()
-    {
-        // Implementation for obtaining pipelines
-        serviceProvider.GetServices<IPipeline>();
-    }
-
+   
+    /// <summary>
+    /// Publishes an event to all registered subscribers.
+    /// </summary>
+    /// <typeparam name="TEntity"></typeparam>
+    /// <param name="entity"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task PublishAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)  where TEntity : class
     {
         var publishers = serviceProvider.GetServices(typeof(IPublisher<TEntity>)).ToArray();
@@ -37,20 +39,47 @@ public class MddrSender : ISender, IDisposable
             {
                 await typedPublisher.PublishAsync(entity, cancellationToken);
                 
+            }else
+            {
+                throw new InvalidOperationException($"The publisher is not of the expected type {typeof(IPublisher<TEntity>).Name}");
             }
             
             
         }
     }
 
+    /// <summary>
+    /// Sends a command and returns the response through all pipelines configured.
+    /// </summary>
+    /// <typeparam name="TResponse"></typeparam>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> command, CancellationToken cancellationToken = default)
     {
+        Func<CancellationToken, Task<TResponse>> fnDelegate = GetDelegateToCall(command);
 
+        List<Func<CancellationToken, Task<TResponse>>> calls = new List<Func<CancellationToken, Task<TResponse>>>();
+
+        calls.Add(fnDelegate);
+
+        var pipelines = serviceProvider.GetServices<IPipeline>();
+
+        foreach (var pipeline in pipelines.Reverse())
+        {
+            var lastCall = calls.Last();
+            Func<CancellationToken, Task<TResponse>> nextCall = async (CancellationToken ct = default) => await pipeline.SendAsync(command, lastCall, ct);
+            calls.Add(nextCall);
+        }
+
+        return await calls.Last()(cancellationToken);
+    }
+
+    private Func<CancellationToken, Task<TResponse>> GetDelegateToCall<TResponse>(IRequest<TResponse> command)
+    {
         var inputType = command.GetType();
 
         var outputType = typeof(TResponse);
-
-        var pipelines = serviceProvider.GetServices<IPipeline>();
 
         var handlerType = typeof(IRequestHandler<,>).MakeGenericType(inputType, outputType);
 
@@ -65,28 +94,12 @@ public class MddrSender : ISender, IDisposable
 
         Func<CancellationToken, Task<TResponse>> fnDelegate = async (CancellationToken ct = default) =>
         {
-            var task = (Task<TResponse>)method.Invoke(handler, new object[] { command, ct });
+            var task = method?.Invoke(handler, new object[] { command, ct }) as Task<TResponse>;
+
+            if (task == null) throw new DataException("The task returned by the handler is null");
+
             return await task;
         };
-
-
-
-        Func<CancellationToken, Task<TResponse>> firstCall = null;
-
-        List<Func<CancellationToken, Task<TResponse>>> calls = new List<Func<CancellationToken, Task<TResponse>>>();
-
-        calls.Add(fnDelegate);
-        //tengo que llamar de un pipeline a otro  en el primero a fnDelegate y en los demas al siguiente pipeline
-
-
-
-        foreach (var pipeline in pipelines.Reverse())
-        {
-            var lastCall = calls.Last();
-            Func<CancellationToken, Task<TResponse>> nextCall = async (CancellationToken ct = default) => await pipeline.SendAsync(command, lastCall, ct);
-            calls.Add(nextCall);
-        }
-
-        return await calls.Last()(cancellationToken);
+        return fnDelegate;
     }
 }
