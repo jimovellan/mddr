@@ -40,6 +40,6 @@ public class When_HasNoElements
         var result = collection.HasNoElements();
 
         // Assert
-        Assert.False(result);
+        Assert.True(result);
     }
 }

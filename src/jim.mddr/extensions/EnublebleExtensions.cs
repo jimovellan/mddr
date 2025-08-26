@@ -11,7 +11,7 @@ public static class EnumerableExtensions
     /// <returns></returns>
     public static bool HasElements<T>(this IEnumerable<T> source)
     {
-        return source != null && source.Any();
+        return  source?.Any() ?? false;
     }
 
     /// <summary>
