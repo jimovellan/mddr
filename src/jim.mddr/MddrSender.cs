@@ -33,11 +33,12 @@ public class MddrSender : ISender, IDisposable
         
         foreach (var publisher in publishers)
         {
-            var method = typeof(IPublisher<TEntity>).GetMethod("PublishAsync");
-            if (method != null)
+            if(publisher is IPublisher<TEntity> typedPublisher)
             {
-                await (Task)method.Invoke(publisher, new object[] { entity, cancellationToken });    
+                await typedPublisher.PublishAsync(entity, cancellationToken);
+                
             }
+            
             
         }
     }
